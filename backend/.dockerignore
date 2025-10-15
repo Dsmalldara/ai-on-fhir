@@ -1,0 +1,26 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment files (for security, use Render/Compose env vars instead)
+.env
+.env.* 
+
+# Local dev files
+*.log
+*.sqlite3
+*.db
+.vscode/
+.idea/
+*.swp
+
+# Docker & build artifacts
+Dockerfile
+docker-compose.yml
+*.tar
+*.gz
+
+# Git
+.git/
+.gitignore
