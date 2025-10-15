@@ -23,17 +23,20 @@ const eslintConfig = [
     rules: {
       // Temporarily allow 'any' if needed (use sparingly)
       "@typescript-eslint/no-explicit-any": "off",
-      
+
       // Warnings instead of errors for unused vars
-      "@typescript-eslint/no-unused-vars": ["warn", { 
-        vars: "all", 
-        args: "after-used", 
-        ignoreRestSiblings: true 
-      }],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          args: "after-used",
+          ignoreRestSiblings: true,
+        },
+      ],
 
       // Optional: allow console logs (useful during dev)
-      "no-console": "warn"
-    }
+      "no-console": "warn",
+    },
   },
 ];
 
