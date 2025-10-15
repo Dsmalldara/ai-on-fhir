@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# ---------- Frontend (React/Next.js) ----------
+cd frontend || exit 1
+
+# Format frontend code with Prettier
+npx prettier --write .
+
+
+npm run build || exit 1
+
+
+
+cd ../../

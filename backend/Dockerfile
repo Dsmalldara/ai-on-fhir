@@ -1,0 +1,23 @@
+# Use an official lightweight Python image
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt \
+    && python -m spacy download en_core_web_sm
+
+
+# Expose FastAPI’s default port
+EXPOSE 8000
+
+# Run FastAPI with Uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+
+

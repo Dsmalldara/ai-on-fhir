@@ -1,0 +1,46 @@
+{
+  "name": "ai-on-fhir",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "dependencies": {
+    "husky": "^9.1.7",
+    "react-is": "^19.2.0",
+    "recharts": "^3.2.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "commitlint": "^20.1.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.37.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^16.2.4",
+    "prettier": "^3.6.2"
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && docker-compose up --build",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && docker-compose up",
+    "build:frontend": "cd frontend && npm run build",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}

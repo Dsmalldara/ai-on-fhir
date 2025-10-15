@@ -1,0 +1,50 @@
+# ----------------------------------------------------------------------
+# Python / FastAPI backend ignores
+# ----------------------------------------------------------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test and coverage data
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+nosetests.xml
+coverage.xml
+
+# Editor / IDE specific
+.vscode/
+
+
+# OS / file system artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+
+# Logs and temp data
+*.log
+logs/
+tmp/
+temp/
+
+# Environment variables
+.env
+.env.*
