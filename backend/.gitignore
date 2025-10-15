@@ -47,4 +47,10 @@ temp/
 
 # Environment variables
 .env
+
 .env.*
+
+
+
+Dockerfile
+docker-compose.yml
