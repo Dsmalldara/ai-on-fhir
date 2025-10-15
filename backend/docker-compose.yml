@@ -1,13 +1,11 @@
 version: "3.8"
-
 services:
   backend:
-    build: .
-    container_name: ai-on-fhir-backend
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app              # Mount local code for live reload
     environment:
-      - ENV=development
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      - ENV=production
+    restart: unless-stopped
