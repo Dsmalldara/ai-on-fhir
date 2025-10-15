@@ -1,54 +1,56 @@
-AI on FHIR – Streamlined Backend
+# AI on FHIR – Streamlined Backend
 
-A lightweight FastAPI backend that interprets natural-language healthcare queries and converts them into FHIR-style search requests over static sample data.
+A lightweight **FastAPI backend** that interprets natural-language healthcare queries and converts them into **FHIR-style search requests** over static sample data.
 
-This implementation covers Part 1 of the AI on FHIR assessment (Backend & NLP Integration). It is containerized with Docker and exposes REST endpoints for query parsing, patient search, and analytics.
+This implementation covers **Part 1 of the AI on FHIR assessment (Backend & NLP Integration)**. It is **containerized with Docker** and exposes REST endpoints for query parsing, patient search, and analytics.
 
-Overview
+---
+
+## Overview
 
 The service accepts queries such as:
 
-“Show me all diabetic patients over 60”
+> “Show me all diabetic patients over 60”
 
 It then:
 
-Extracts structured filters (age, gender, diagnosis) using rule-based NLP (spaCy if available, regex fallback).
+- Extracts structured filters (age, gender, diagnosis) using **rule-based NLP** (spaCy if available, regex fallback).  
+- Converts filters into a simulated **FHIR search** over synthetic patient data.  
+- Returns a **mock FHIR-compliant response** and summary statistics.
 
-Converts filters into a simulated FHIR search over synthetic patient data.
+---
 
-Returns a mock FHIR-compliant response and summary statistics.
+## Key Features
 
-Key features:
+- **FastAPI** with OpenAPI documentation (`/docs`)  
+- **spaCy** for Natural Language Processing and regex-based NLP parser for fallback  
+- **Static synthetic dataset** (no PHI)  
+- **Age operator handling** (`>`, `<`, `between`)  
+- **System date validation** before age filtering  
+- Targeted **diabetes code isolation** (`E10`, `E11` only)  
+- **Chart and table data endpoints** for front-end use  
 
-FastAPI with OpenAPI documentation (/docs)
+---
 
-spaCy for Natural Language Processing  and a  regex-based NLP parser for fallback
+## Prerequisites
 
-Static synthetic dataset (no PHI)
+- Docker and Docker Compose  
+- (Optional) Python 3.9+ if running locally without Docker  
 
-Age operator handling (>, <, between)
+---
 
-System date validation before age filtering
+## Running with Docker
 
-Targeted diabetes code isolation (E10, E11 only)
+1. **Build the image**
 
-Chart and table data endpoints for front-end use
-
-Prerequisites
-
-Docker and Docker Compose
-
-(Optional) Python 3.9+ if running locally without Docker
-
-Running with Docker
-1. Build the image
+```bash
 docker build -t ai-on-fhir-backend .
+Run the container
 
-2. Run the container
+bash
+Copy code
 docker run -d -p 8000:8000 ai-on-fhir-backend
-
-
-3. Access the API
+Access the API
 
 Health check: http://localhost:8000/health
 
@@ -56,13 +58,8 @@ Interactive docs: http://localhost:8000/docs
 
 Alternative Redoc: http://localhost:8000/redoc
 
-
-
 API Endpoints
-
 Full API specification and interactive documentation are available at /docs.
-
-Common endpoints:
 
 Endpoint	Method	Purpose
 /health	GET	Service status and metadata
@@ -72,41 +69,37 @@ Endpoint	Method	Purpose
 /filters/options	GET	Static dropdown filter options
 /suggestions	GET	Autocomplete query suggestions
 
-
 Environment Variables
 Variable	Description	Default
 PORT	Port exposed by FastAPI	8000
 LOG_LEVEL	Logging verbosity	info
 
-
 Development (Run locally without Docker)
+bash
+Copy code
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt  # or: pip install fastapi uvicorn pydantic spacy
 python -m spacy download en_core_web_sm
 uvicorn main:app --reload --port 8000
+Open http://localhost:8000/docs
 
-
-Open: http://localhost:8000/docs
-
-
-
-Project layout
+Project Layout
+bash
+Copy code
 .
 ├── main.py            # FastAPI application
 ├── data.py            # Static sample patients and keyword mappings
 ├── Dockerfile         # Container build instructions
 ├── docker-compose.yml
 ├── requirements.txt   # Python dependencies
-├──  examples.md       # usage examples and sample requests for interacting with the backend API.
+├── examples.md        # Usage examples and sample requests for interacting with the backend API
 └── README.md          # Project documentation
 
-Notes for reviewers
-
+Notes for Reviewers
 The /docs endpoint contains the full OpenAPI contract and example payloads; consult it for endpoint schemas and sample responses.
 
-This backend demonstrates NLP → simulated FHIR flow, filter semantics, and defensive checks (date validation, diagnosis isolation). It is intentionally focused on the assessment scope and uses synthetic data only.
+This backend demonstrates NLP → simulated FHIR flow, filter semantics, and defensive checks (date validation, diagnosis isolation).
 
-License
+It is intentionally focused on the assessment scope and uses synthetic data only.
 
-This project is provided for technical assessment and demonstration purposes only. All included data is fictitious and safe for public use.

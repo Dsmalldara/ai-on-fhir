@@ -1,13 +1,17 @@
-Example Query
+## Example Queries
 
-Request
+### 1️⃣ How many diabetic patients are over 50?
 
+**Request**
+
+```http
 POST /query
 Content-Type: application/json
 
-1. {
-  "query": "how many  diabetic patients are  over 50"
+{
+  "query": "how many diabetic patients are over 50"
 }
+
 
 Response (simplified)
 
@@ -40,7 +44,10 @@ Response (simplified)
   },
 }
 
-2.  {
+
+
+### 2️⃣ Show me all kidney disease patients
+ {
  "query" :"Show me all kidney disease patients"}
 
 
@@ -67,7 +74,10 @@ Response (simplified)
   },
 }
 
-3.   {
+
+### 3️⃣ Show me all hypertension patients
+
+ {
     "query" : "Show me all hypertension  patients"
 }
 
