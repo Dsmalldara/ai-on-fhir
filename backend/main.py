@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, List, Optional, Union
 from fastapi import FastAPI, Query, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import re
 import datetime
@@ -35,6 +36,14 @@ app = FastAPI(
 )
 
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Your Next.js frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # --- Models ---
 class AgeFilter(BaseModel):
     op: str
@@ -53,6 +62,89 @@ class ParsedFilters(BaseModel):
 
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1)
+
+
+class HealthResponse(BaseModel):
+    status: str
+    nlp_available: bool
+    total_patients: int
+
+
+class PatientSummary(BaseModel):
+    id: str
+    name: str
+    age: int
+    gender: str
+    primary_condition: str
+    medications: str
+
+
+class PaginationInfo(BaseModel):
+    page: int
+    limit: int
+    total_results: int
+    total_pages: int
+
+
+class SearchPatientsResponse(BaseModel):
+    data: List[PatientSummary]
+    pagination: PaginationInfo
+
+
+class QuerySummary(BaseModel):
+    total_patients_found: int
+    confidence_score: float
+
+
+
+class AppliedFilters(BaseModel):
+    age_filter: Optional[str] = None
+    gender_filter: Optional[str] = None
+    diagnosis_filter: Optional[List[str]] = None
+
+
+class QueryResponse(BaseModel):
+    parsed_filters: ParsedFilters
+    applied_filters: AppliedFilters
+    summary: QuerySummary
+    results_sample: List[Dict[str, Any]]
+
+
+class SuggestionResponse(BaseModel):
+    suggestions: List[str]
+
+
+class AgeDistribution(BaseModel):
+    age_group: str
+    count: int
+
+
+class GenderDistribution(BaseModel):
+    gender: str
+    count: int
+
+
+class ConditionDistribution(BaseModel):
+    condition: str
+    count: int
+
+
+class ChartDataResponse(BaseModel):
+    age_distribution: List[AgeDistribution]
+    gender_distribution: List[GenderDistribution]
+    condition_distribution: List[ConditionDistribution]
+    total_patients: int
+
+
+class FilterOption(BaseModel):
+    label: str
+    value: str
+
+
+class FilterOptionsResponse(BaseModel):
+    age_ranges: List[FilterOption]
+    genders: List[FilterOption]
+    diagnoses: List[FilterOption]
 
 
 # --- Utilities ---
@@ -191,20 +283,56 @@ def _validate_system_date_against_data(
     return True
 
 
+def _apply_age_filter(patients: List[Dict], age_filter: str, today: datetime.date) -> List[Dict]:
+    """Apply age filter logic to patient list."""
+    # Range like "30-50"
+    if "-" in age_filter and age_filter.count("-") == 1 and age_filter.split("-")[0].isdigit():
+        low_s, high_s = age_filter.split("-")
+        low, high = int(low_s), int(high_s)
+        return [
+            p for p in patients
+            if low <= calculate_age(p["birthDate"], reference_date=today) <= high
+        ]
+    
+    # Operator-prefixed filters: e.g. ">60", ">=60", "<=70", "<50"
+    m = re.match(r"^(>=|<=|>|<)?\s*(\d{1,3})\+?$", age_filter.strip())
+    if m:
+        op = m.group(1) or ">="
+        age_val = int(m.group(2))
+        ops = {
+            ">": lambda age: age > age_val,
+            ">=": lambda age: age >= age_val,
+            "<": lambda age: age < age_val,
+            "<=": lambda age: age <= age_val,
+        }
+        return [
+            p for p in patients
+            if ops[op](calculate_age(p["birthDate"], reference_date=today))
+        ]
+    
+    # Fallback: "60+" or exact age "60"
+    if age_filter.endswith("+") and age_filter[:-1].isdigit():
+        min_age = int(age_filter[:-1])
+        return [
+            p for p in patients
+            if calculate_age(p["birthDate"], reference_date=today) >= min_age
+        ]
+    elif age_filter.isdigit():
+        age_val = int(age_filter)
+        return [
+            p for p in patients
+            if calculate_age(p["birthDate"], reference_date=today) == age_val
+        ]
+    
+    return patients
+
+
 def filter_patients(
     age_filter: Optional[str] = None,
     gender_filter: Optional[str] = None,
     diagnosis_filter: Optional[Union[str, List[str]]] = None,
 ) -> List[Dict]:
-    """Apply filters to patient dataset.
-
-    age_filter supports forms:
-      - ">60", ">=60", "<60", "<=60"
-      - "30-50" (range)
-      - None
-
-    diagnosis_filter can be a single code string or a list of codes.
-    """
+    """Apply filters to patient dataset."""
     patients = SAMPLE_PATIENTS.copy()
 
     # Gender filter
@@ -213,98 +341,26 @@ def filter_patients(
 
     # Diagnosis filter (support list)
     if diagnosis_filter:
-        if isinstance(diagnosis_filter, str):
-            diag_codes = {diagnosis_filter}
-        else:
-            diag_codes = set(diagnosis_filter)
+        diag_codes = {diagnosis_filter} if isinstance(diagnosis_filter, str) else set(diagnosis_filter)
         patients = [
-            p
-            for p in patients
+            p for p in patients
             if any(c.get("code") in diag_codes for c in p.get("conditions", []))
         ]
 
-    # Age filter: perform a system-date sanity check before applying
+    # Age filter
     if age_filter:
         today = datetime.date.today()
         if not _validate_system_date_against_data(today, patients):
-            # If system date is inconsistent with patient data, skip age filtering and log
-            logger.error(
-                "System date out-of-sync with patient birth dates. Age filter will be skipped."
-            )
-            return (
-                patients  # return current filtered set without applying age constraints
-            )
-
-        # Range like "30-50"
-        if (
-            "-" in age_filter
-            and age_filter.count("-") == 1
-            and age_filter.split("-")[0].isdigit()
-        ):
-            low_s, high_s = age_filter.split("-")
-            low, high = int(low_s), int(high_s)
-            patients = [
-                p
-                for p in patients
-                if low <= calculate_age(p["birthDate"], reference_date=today) <= high
-            ]
-        else:
-            # Operator-prefixed filters: e.g. ">60", ">=60", "<=70", "<50"
-            m = re.match(r"^(>=|<=|>|<)?\s*(\d{1,3})\+?$", age_filter.strip())
-            if m:
-                op = m.group(1) or ">="
-                age_val = int(m.group(2))
-                if op == ">":
-                    patients = [
-                        p
-                        for p in patients
-                        if calculate_age(p["birthDate"], reference_date=today) > age_val
-                    ]
-                elif op == ">=":
-                    patients = [
-                        p
-                        for p in patients
-                        if calculate_age(p["birthDate"], reference_date=today)
-                        >= age_val
-                    ]
-                elif op == "<":
-                    patients = [
-                        p
-                        for p in patients
-                        if calculate_age(p["birthDate"], reference_date=today) < age_val
-                    ]
-                elif op == "<=":
-                    patients = [
-                        p
-                        for p in patients
-                        if calculate_age(p["birthDate"], reference_date=today)
-                        <= age_val
-                    ]
-            else:
-                # fallback: try numeric "60+" or "60"
-                if age_filter.endswith("+") and age_filter[:-1].isdigit():
-                    min_age = int(age_filter[:-1])
-                    patients = [
-                        p
-                        for p in patients
-                        if calculate_age(p["birthDate"], reference_date=today)
-                        >= min_age
-                    ]
-                elif age_filter.isdigit():
-                    # treat bare "60" as exact age match
-                    age_val = int(age_filter)
-                    patients = [
-                        p
-                        for p in patients
-                        if calculate_age(p["birthDate"], reference_date=today)
-                        == age_val
-                    ]
+            logger.error("System date out-of-sync with patient birth dates. Age filter skipped.")
+            return patients
+        
+        patients = _apply_age_filter(patients, age_filter, today)
 
     return patients
 
 
 # --- API Endpoints ---
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 def health():
     """Health check"""
     return {
@@ -314,7 +370,7 @@ def health():
     }
 
 
-@app.post("/query")
+@app.post("/query", response_model=QueryResponse)
 def query_endpoint(body: QueryRequest):
     """Parse natural language query and return parsed filters + summary"""
     filters = parse_query(body.query)
@@ -360,13 +416,11 @@ def query_endpoint(body: QueryRequest):
             "total_patients_found": len(matching),
             "confidence_score": filters.confidence,
         },
-        "results_sample": matching[
-            :10
-        ],  # include up to 10 matches for quick inspection
+        "results_sample": matching[:10],
     }
 
 
-@app.get("/suggestions")
+@app.get("/suggestions", response_model=SuggestionResponse)
 def suggestions(q: str = ""):
     """Query autocomplete suggestions"""
     if not q:
@@ -377,7 +431,7 @@ def suggestions(q: str = ""):
     return {"suggestions": filtered[:10]}
 
 
-@app.get("/analytics/chart-data")
+@app.get("/analytics/chart-data", response_model=ChartDataResponse)
 def chart_data(
     age_filter: Optional[str] = None,
     gender_filter: Optional[str] = None,
@@ -425,7 +479,7 @@ def chart_data(
     }
 
 
-@app.get("/patients/search")
+@app.get("/patients/search", response_model=SearchPatientsResponse)
 def search_patients(
     age_filter: Optional[str] = None,
     gender_filter: Optional[str] = None,
@@ -469,7 +523,7 @@ def search_patients(
     }
 
 
-@app.get("/filters/options")
+@app.get("/filters/options", response_model=FilterOptionsResponse)
 def filter_options():
     """Get available filter options for dropdowns"""
     all_conditions = {}

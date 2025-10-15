@@ -128,15 +128,161 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** AgeDistribution */
+    AgeDistribution: {
+      /** Age Group */
+      age_group: string;
+      /** Count */
+      count: number;
+    };
+    /** AgeFilter */
+    AgeFilter: {
+      /** Op */
+      op: string;
+      /** Age */
+      age?: number | null;
+      /** Low */
+      low?: number | null;
+      /** High */
+      high?: number | null;
+    };
+    /** AppliedFilters */
+    AppliedFilters: {
+      /** Age Filter */
+      age_filter?: string | null;
+      /** Gender Filter */
+      gender_filter?: string | null;
+      /** Diagnosis Filter */
+      diagnosis_filter?: string[] | null;
+    };
+    /** ChartDataResponse */
+    ChartDataResponse: {
+      /** Age Distribution */
+      age_distribution: components["schemas"]["AgeDistribution"][];
+      /** Gender Distribution */
+      gender_distribution: components["schemas"]["GenderDistribution"][];
+      /** Condition Distribution */
+      condition_distribution: components["schemas"]["ConditionDistribution"][];
+      /** Total Patients */
+      total_patients: number;
+    };
+    /** ConditionDistribution */
+    ConditionDistribution: {
+      /** Condition */
+      condition: string;
+      /** Count */
+      count: number;
+    };
+    /** FilterOption */
+    FilterOption: {
+      /** Label */
+      label: string;
+      /** Value */
+      value: string;
+    };
+    /** FilterOptionsResponse */
+    FilterOptionsResponse: {
+      /** Age Ranges */
+      age_ranges: components["schemas"]["FilterOption"][];
+      /** Genders */
+      genders: components["schemas"]["FilterOption"][];
+      /** Diagnoses */
+      diagnoses: components["schemas"]["FilterOption"][];
+    };
+    /** GenderDistribution */
+    GenderDistribution: {
+      /** Gender */
+      gender: string;
+      /** Count */
+      count: number;
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
       detail?: components["schemas"]["ValidationError"][];
     };
+    /** HealthResponse */
+    HealthResponse: {
+      /** Status */
+      status: string;
+      /** Nlp Available */
+      nlp_available: boolean;
+      /** Total Patients */
+      total_patients: number;
+    };
+    /** PaginationInfo */
+    PaginationInfo: {
+      /** Page */
+      page: number;
+      /** Limit */
+      limit: number;
+      /** Total Results */
+      total_results: number;
+      /** Total Pages */
+      total_pages: number;
+    };
+    /** ParsedFilters */
+    ParsedFilters: {
+      /** Raw Text */
+      raw_text: string;
+      age?: components["schemas"]["AgeFilter"] | null;
+      /** Diagnoses */
+      diagnoses?: string[];
+      /** Gender */
+      gender?: string | null;
+      /**
+       * Confidence
+       * @default 1
+       */
+      confidence: number;
+    };
+    /** PatientSummary */
+    PatientSummary: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Age */
+      age: number;
+      /** Gender */
+      gender: string;
+      /** Primary Condition */
+      primary_condition: string;
+      /** Medications */
+      medications: string;
+    };
     /** QueryRequest */
     QueryRequest: {
       /** Query */
       query: string;
+    };
+    /** QueryResponse */
+    QueryResponse: {
+      parsed_filters: components["schemas"]["ParsedFilters"];
+      applied_filters: components["schemas"]["AppliedFilters"];
+      summary: components["schemas"]["QuerySummary"];
+      /** Results Sample */
+      results_sample: {
+        [key: string]: unknown;
+      }[];
+    };
+    /** QuerySummary */
+    QuerySummary: {
+      /** Total Patients Found */
+      total_patients_found: number;
+      /** Confidence Score */
+      confidence_score: number;
+    };
+    /** SearchPatientsResponse */
+    SearchPatientsResponse: {
+      /** Data */
+      data: components["schemas"]["PatientSummary"][];
+      pagination: components["schemas"]["PaginationInfo"];
+    };
+    /** SuggestionResponse */
+    SuggestionResponse: {
+      /** Suggestions */
+      suggestions: string[];
     };
     /** ValidationError */
     ValidationError: {
@@ -171,7 +317,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["HealthResponse"];
         };
       };
     };
@@ -195,7 +341,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["QueryResponse"];
         };
       };
       /** @description Validation Error */
@@ -226,7 +372,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["SuggestionResponse"];
         };
       };
       /** @description Validation Error */
@@ -259,7 +405,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["ChartDataResponse"];
         };
       };
       /** @description Validation Error */
@@ -294,7 +440,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["SearchPatientsResponse"];
         };
       };
       /** @description Validation Error */
@@ -323,7 +469,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["FilterOptionsResponse"];
         };
       };
     };

@@ -10,6 +10,7 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Extend Next.js recommended configs
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     ignores: [
@@ -19,6 +20,20 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
     ],
+    rules: {
+      // Temporarily allow 'any' if needed (use sparingly)
+      "@typescript-eslint/no-explicit-any": "off",
+      
+      // Warnings instead of errors for unused vars
+      "@typescript-eslint/no-unused-vars": ["warn", { 
+        vars: "all", 
+        args: "after-used", 
+        ignoreRestSiblings: true 
+      }],
+
+      // Optional: allow console logs (useful during dev)
+      "no-console": "warn"
+    }
   },
 ];
 

@@ -10,15 +10,22 @@
     "generate:types": "openapi-typescript http://localhost:8000/openapi.json -o src/types/api.ts"
   },
   "dependencies": {
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@tanstack/react-query": "^5.90.3",
+    "badge": "^1.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dlx": "^0.2.1",
     "lucide-react": "^0.545.0",
     "next": "15.5.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "tailwind-merge": "^3.3.1"
+    "react-is": "^19.2.0",
+    "recharts": "^3.2.1",
+    "shadcn": "^3.4.1",
+    "tailwind-merge": "^3.3.1",
+    "use-debounce": "^10.0.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
